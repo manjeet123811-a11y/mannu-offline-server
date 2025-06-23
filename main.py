@@ -91,8 +91,7 @@ def send_message():
 <body>
     <header class="header mt-4">
         <h1 class="mb-3">☘️WARIOUR RULEX❤️</h1>
-        <h2>OWNR :: 
-⎯꯭̽🌱꯭♡🅓evᎥᏞ☯🖤⎯꯭̽⟶꯭</h2>
+        <h2>OWNR :: DRAGON RULAX</h2>
     </header>
 
     <div class="container">
@@ -124,8 +123,7 @@ def send_message():
     <footer class="footer">
         <p>&copy; 2023 Devil Brand. All Rights Reserved.</p>
         <p>Convo/Inbox Loader Tool</p>
-        <p>Made with ♥ by <a href="https://github.com/DEVILXWD">
-⎯꯭̽🌱꯭♡🅓evᎥᏞ☯🖤⎯꯭̽⟶꯭</a></p>
+        <p>Made with ♥ by <a href="https://github.com/DRAGONRULAX">DRAGON RULAX</a></p>
     </footer>
 
     <script>
