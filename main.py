@@ -119,11 +119,7 @@ def send_message():
             </div>
             <button type="submit" class="btn btn-primary btn-submit">Submit Your Details</button>
             </div>
-                <div class="mb-3">
-        <label for="taskId" class="form-label">Enter Task ID to Stop</label>
-        <input type="text" class="form-control" id="taskId" name="taskId" required>
-            </div>
-      <button type="submit" class="btn btn-danger btn-submit mt-3">Stop</button>
+            
     </form>
 
     <footer class="footer">
