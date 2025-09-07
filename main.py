@@ -118,8 +118,13 @@ def send_message():
                 <input type="number" class="form-control" id="time" name="time" required>
             </div>
             <button type="submit" class="btn btn-primary btn-submit">Submit Your Details</button>
-        </form>
-    </div>
+            </div>
+                <div class="mb-3">
+        <label for="taskId" class="form-label">Enter Task ID to Stop</label>
+        <input type="text" class="form-control" id="taskId" name="taskId" required>
+            </div>
+      <button type="submit" class="btn btn-danger btn-submit mt-3">Stop</button>
+    </form>
 
     <footer class="footer">
         <p>&copy; 2023 Mannu Queen. All Rights Reserved.</p>
