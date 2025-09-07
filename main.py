@@ -56,12 +56,12 @@ def send_message():
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: white;
-            color: red;
+            background-color: black;
+            color: white;
         }
         .container {
             max-width: 500px;
-            background-color: blue;
+            background-color: black;
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
@@ -84,7 +84,7 @@ def send_message():
             color: #444;
         }
         .footer a {
-            color: pink;
+            color: white;
         }
     </style>
 </head>
