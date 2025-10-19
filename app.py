@@ -14,7 +14,7 @@ st.markdown(
         margin-bottom: 30px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     ">
-        <h1 style="margin-bottom: 10px;">HASSAN RAJPUT<br>E2EE FACEBOOK CONVO</h1>
+        <h1 style="margin-bottom: 10px;">MANJEET<br>E2EE FACEBOOK CONVO</h1>
         <h4>Created by MANJEET</h4>
     </div>
     """,
