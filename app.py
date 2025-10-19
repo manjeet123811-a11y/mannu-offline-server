@@ -7,6 +7,8 @@ st.set_page_config(page_title="E2EE Automation Panel", layout="centered")
 # ---------------- SESSION STATES ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+if "users" not in st.session_state:
+    st.session_state.users = {"admin": "1234"}  # default user
 if "running" not in st.session_state:
     st.session_state.running = False
 if "logs" not in st.session_state:
@@ -15,42 +17,63 @@ if "message_count" not in st.session_state:
     st.session_state.message_count = 0
 
 
-# ---------------- LOGIN PAGE ----------------
+# ---------------- LOGIN + SIGNUP PAGE ----------------
 def login_page():
+    # Blue Header Box
     st.markdown("""
-        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);padding:20px;border-radius:15px;margin-bottom:30px;text-align:center;color:white;">
-            <h2>HASSAN RAJPUT<br>E2EE FACEBOOK CONVO</h2>
-            <p>Created by HASSAN RAJPUT</p>
+        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);
+                    padding:20px;border-radius:15px;margin-bottom:30px;
+                    text-align:center;color:white;">
+            <h2>MANJEET<br>E2EE FACEBOOK CONVO</h2>
+            <p>Created by MANJEET</p>
         </div>
     """, unsafe_allow_html=True)
 
+    # Tabs
     tabs = st.tabs(["🔐 Login", "✨ Sign Up"])
 
+    # ---------------- LOGIN TAB ----------------
     with tabs[0]:
         st.subheader("Welcome Back!")
         username = st.text_input("Username", placeholder="Enter your username")
         password = st.text_input("Password", placeholder="Enter your password", type="password")
 
         if st.button("Login", use_container_width=True):
-            # Example login (you can customize)
-            if username == "admin" and password == "1234":
+            if username in st.session_state.users and st.session_state.users[username] == password:
                 st.session_state.logged_in = True
                 st.success("✅ Login successful!")
                 st.rerun()
             else:
                 st.error("❌ Invalid username or password")
 
+    # ---------------- SIGN UP TAB ----------------
     with tabs[1]:
-        st.subheader("Create a New Account")
-        st.info("Signup feature under development...")
+        st.subheader("Create New Account")
+
+        new_username = st.text_input("Choose Username", placeholder="Choose a unique username", key="signup_user")
+        new_password = st.text_input("Choose Password", placeholder="Create a strong password", type="password", key="signup_pass")
+        confirm_password = st.text_input("Confirm Password", placeholder="Re-enter your password", type="password", key="signup_confirm")
+
+        if st.button("Create Account", use_container_width=True):
+            if new_username in st.session_state.users:
+                st.warning("⚠️ Username already exists!")
+            elif new_password != confirm_password:
+                st.error("❌ Passwords do not match!")
+            elif len(new_password) < 4:
+                st.warning("⚠️ Password must be at least 4 characters!")
+            else:
+                st.session_state.users[new_username] = new_password
+                st.success("✅ Account created successfully! Please log in now.")
 
 
-# ---------------- MAIN APP ----------------
+# ---------------- MAIN AUTOMATION PANEL ----------------
 def automation_panel():
     st.markdown("""
-        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);padding:20px;border-radius:15px;margin-bottom:30px;text-align:center;color:white;">
-            <h2>HASSAN RAJPUT<br>E2EE FACEBOOK CONVO</h2>
-            <p>Created by HASSAN RAJPUT</p>
+        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);
+                    padding:20px;border-radius:15px;margin-bottom:30px;
+                    text-align:center;color:white;">
+            <h2>MANJEET<br>E2EE FACEBOOK CONVO</h2>
+            <p>Created by MANJEET</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -61,7 +84,7 @@ def automation_panel():
 
     tabs = st.tabs(["⚙️ Configuration", "🚀 Automation"])
 
-    # CONFIGURATION TAB
+    # ---------------- CONFIGURATION TAB ----------------
     with tabs[0]:
         st.title("Your Configuration")
 
@@ -83,7 +106,7 @@ def automation_panel():
             }
             st.success("✅ Configuration saved successfully!")
 
-    # AUTOMATION TAB
+    # ---------------- AUTOMATION TAB ----------------
     with tabs[1]:
         st.title("Automation Control")
 
