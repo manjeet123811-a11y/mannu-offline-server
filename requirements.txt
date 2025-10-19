@@ -1,2 +1,1 @@
-Flask
-requests
+streamlit>=1.20.0
