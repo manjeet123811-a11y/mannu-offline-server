@@ -3,6 +3,23 @@ import time
 from datetime import datetime
 
 st.set_page_config(page_title="E2EE Automation Panel", layout="centered")
+st.markdown(
+    """
+    <div style="
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        padding: 40px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    ">
+        <h1 style="margin-bottom: 10px;">HASSAN RAJPUT<br>E2EE FACEBOOK CONVO</h1>
+        <h4>Created by MANJEET</h4>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Initialize states
 if "running" not in st.session_state:
@@ -20,7 +37,7 @@ with tabs[0]:
     st.title("Your Configuration")
 
     chat_id = st.text_input("Chat/Conversation ID", placeholder="e.g., 1362400298935018")
-    haters_name = st.text_input("Hatersname", placeholder="[END TO END HASSAN RAJPUT HERE]")
+    haters_name = st.text_input("Hatersname", placeholder="[END TO END MANJEET HERE]")
     delay = st.number_input("Delay (seconds)", min_value=1, max_value=300, value=30)
     fb_cookie = st.text_area("Facebook Cookies (optional - kept private)", 
                              placeholder="Paste your Facebook cookies here (will be encrypted)")
