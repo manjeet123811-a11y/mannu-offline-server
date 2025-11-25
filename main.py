@@ -1,7 +1,6 @@
 import streamlit as st
 import threading, time
-from selenium 
-import webdriver
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import database as db
@@ -32,6 +31,7 @@ def render_live_console():
     for line in st.session_state.live_logs[-100:]:
         st.markdown(line)
     st.markdown('</div>', unsafe_allow_html=True)
+# ------------------------------------------------------------------------------------
 
 
 # ---------------- CSS ----------------
@@ -69,12 +69,10 @@ st.markdown('<h1 style="text-align:center;">E23E FB</h1>', unsafe_allow_html=Tru
 
 
 # ---------------- SESSION ----------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "automation_running" not in st.session_state:
-    st.session_state.automation_running = False
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "automation_running" not in st.session_state: st.session_state.automation_running = False
 if "automation_state" not in st.session_state:
-    st.session_state.automation_state = type('obj', (object,), {
+    st.session_state.automation_state = type('obj',(object,),{
         "running": False,
         "message_count": 0,
         "message_rotation_index": 0
@@ -86,18 +84,16 @@ init_live_logs()
 # ---------------- LOGIN ----------------
 if not st.session_state.logged_in:
     tab1, tab2 = st.tabs(["Login", "Create Account"])
-
     with tab1:
         u = st.text_input("Username")
         p = st.text_input("Password", type="password")
-
         if st.button("Login"):
             uid = db.verify_user(u, p)
             if uid:
                 st.session_state.logged_in = True
                 st.session_state.user_id = uid
-
                 cfg = db.get_user_config(uid)
+
                 st.session_state.chat_id = cfg.get("chat_id", "")
                 st.session_state.chat_type = cfg.get("chat_type", "E2EE")
                 st.session_state.delay = cfg.get("delay", 15)
@@ -116,16 +112,13 @@ if not st.session_state.logged_in:
         nu = st.text_input("New Username")
         np = st.text_input("New Password", type="password")
         npc = st.text_input("Confirm Password", type="password")
-
         if st.button("Create User"):
             if np != npc:
                 st.error("Passwords do not match")
             else:
                 ok, msg = db.create_user(nu, np)
-                if ok:
-                    st.success("User created!")
-                else:
-                    st.error(msg)
+                if ok: st.success("User created!")
+                else: st.error(msg)
 
     st.stop()
 
@@ -149,8 +142,7 @@ if msg_file:
 
 # ---------------- CONFIG ----------------
 chat_id = st.text_input("Chat ID", value=st.session_state.chat_id)
-chat_type = st.selectbox("Chat Type", ["E2EE", "Non-E2EE"],
-                         index=0 if st.session_state.chat_type == "E2EE" else 1)
+chat_type = st.selectbox("Chat Type", ["E2EE", "Non-E2EE"], index=0 if st.session_state.chat_type == "E2EE" else 1)
 delay = st.number_input("Delay", 1, 300, value=st.session_state.delay)
 cookies = st.text_area("Cookies", value=st.session_state.cookies)
 
@@ -173,13 +165,11 @@ def setup_browser():
     return webdriver.Chrome(options=opt)
 
 def find_input(driver, chat_type):
-    selectors = ["div[contenteditable='true']"] if chat_type == "E2EE" else \
-                ["div[contenteditable='true']", "textarea", "[role='textbox']"]
-    for s in selectors:
+    sel = ["div[contenteditable='true']"] if chat_type == "E2EE" else ["div[contenteditable='true']", "textarea", "[role='textbox']"]
+    for s in sel:
         try:
             return driver.find_element(By.CSS_SELECTOR, s)
-        except:
-            pass
+        except: pass
     return None
 
 
@@ -191,21 +181,15 @@ def send_messages(cfg, stt):
         time.sleep(8)
         live_log("Facebook loaded")
 
-        # Add cookies
         for c in (cfg.get("cookies") or "").split(";"):
             if "=" in c:
                 n, v = c.split("=", 1)
                 try:
-                    d.add_cookie({
-                        "name": n.strip(),
-                        "value": v.strip(),
-                        "domain": ".facebook.com",
-                        "path": "/"
-                    })
+                    d.add_cookie({"name":n.strip(), "value":v.strip(), "domain":".facebook.com", "path":"/"})
                 except:
                     live_log(f"Cookie failed: {c}")
 
-        d.get(f"https://www.facebook.com/messages/t/{cfg.get('chat_id', '')}")
+        d.get(f"https://www.facebook.com/messages/t/{cfg.get('chat_id','')}")
         time.sleep(10)
         live_log("Chat opened")
 
@@ -216,8 +200,7 @@ def send_messages(cfg, stt):
             return
 
         msgs = [m.strip() for m in (cfg.get("messages") or "").split("\n") if m.strip()]
-        if not msgs:
-            msgs = ["Hello!"]
+        if not msgs: msgs = ["Hello!"]
 
         while stt.running:
             msg = msgs[stt.message_rotation_index % len(msgs)]
@@ -248,15 +231,13 @@ col1, col2 = st.columns(2)
 if col1.button("START", disabled=st.session_state.automation_running):
     cfg = db.get_user_config(st.session_state.user_id)
     cfg["running"] = True
-
     st.session_state.automation_running = True
     st.session_state.automation_state.running = True
 
     t = threading.Thread(target=send_messages, args=(cfg, st.session_state.automation_state))
     t.daemon = True
     t.start()
-
-if col2.button("STOP", disabled=not st.session_state.automation_running):
+    if col2.button("STOP", disabled=not st.session_state.automation_running):
     st.session_state.automation_state.running = False
     st.session_state.automation_running = False
     live_log("🛑 Stop pressed. Automation halting...")
