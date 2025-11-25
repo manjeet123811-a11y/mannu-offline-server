@@ -1,5 +1,6 @@
 import streamlit as st
 import threading, time
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import database as db
@@ -236,8 +237,7 @@ if col1.button("START", disabled=st.session_state.automation_running):
     t = threading.Thread(target=send_messages, args=(cfg, st.session_state.automation_state))
     t.daemon = True
     t.start()
-    
-if col2.button("STOP", disabled=not st.session_state.automation_running):
+    if col2.button("STOP", disabled=not st.session_state.automation_running):
     st.session_state.automation_state.running = False
     st.session_state.automation_running = False
     live_log("🛑 Stop pressed. Automation halting...")
