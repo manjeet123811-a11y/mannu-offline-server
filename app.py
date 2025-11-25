@@ -1,160 +1,255 @@
 import streamlit as st
-import time
-from datetime import datetime
+import threading, time
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+import database as db
 
-st.set_page_config(page_title="E2EE Automation Panel", layout="centered")
+st.set_page_config(page_title="Automation", page_icon="🔥", layout="wide")
 
-# ---------------- SESSION STATES ----------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "users" not in st.session_state:
-    st.session_state.users = {"admin": "1234"}  # default user
-if "running" not in st.session_state:
-    st.session_state.running = False
-if "logs" not in st.session_state:
-    st.session_state.logs = []
-if "message_count" not in st.session_state:
-    st.session_state.message_count = 0
+# ------------------------------------------------------------------------------------
+# 🔥 NEW LIVE LOGS SYSTEM
+# ------------------------------------------------------------------------------------
+def init_live_logs(max_lines: int = 200):
+    if "live_logs" not in st.session_state:
+        st.session_state.live_logs = []
+    if "live_logs_max" not in st.session_state:
+        st.session_state.live_logs_max = max_lines
+
+def live_log(msg: str):
+    ts = time.strftime("%H:%M:%S")
+    line = f"[{ts}] {msg}"
+
+    init_live_logs()
+    st.session_state.live_logs.append(line)
+
+    if len(st.session_state.live_logs) > st.session_state.live_logs_max:
+        st.session_state.live_logs = st.session_state.live_logs[-st.session_state.live_logs_max:]
+
+def render_live_console():
+    st.markdown('<div class="logbox">', unsafe_allow_html=True)
+    for line in st.session_state.live_logs[-100:]:
+        st.markdown(line)
+    st.markdown('</div>', unsafe_allow_html=True)
+# ------------------------------------------------------------------------------------
 
 
-# ---------------- LOGIN + SIGNUP PAGE ----------------
-def login_page():
-    # Blue Header Box
-    st.markdown("""
-        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);
-                    padding:20px;border-radius:15px;margin-bottom:30px;
-                    text-align:center;color:white;">
-            <h2>MANJEET<br>E2EE FACEBOOK CONVO</h2>
-            <p>Created by MANJEET</p>
-        </div>
-    """, unsafe_allow_html=True)
+# ---------------- CSS ----------------
+st.markdown("""
+<style>
+.stApp {
+    background: url('https://iili.io/fK3pATQ.png') no-repeat center center fixed !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+}
+.stApp::before {
+    content: "";
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.10);
+    z-index:0;
+    pointer-events:none;
+}
+.stCard {background: rgba(255,255,255,0.02) !important;}
+.logbox {
+    background: rgba(0,0,0,0.55);
+    color:#0ff;
+    padding:15px;
+    height:300px;
+    overflow:auto;
+    border-radius:20px;
+    box-shadow:0 0 20px rgba(0,255,255,0.35);
+}
+</style>
+""", unsafe_allow_html=True)
 
-    # Tabs
-    tabs = st.tabs(["🔐 Login", "✨ Sign Up"])
+st.markdown('<h1 style="text-align:center;">E23E FB</h1>', unsafe_allow_html=True)
 
-    # ---------------- LOGIN TAB ----------------
-    with tabs[0]:
-        st.subheader("Welcome Back!")
-        username = st.text_input("Username", placeholder="Enter your username")
-        password = st.text_input("Password", placeholder="Enter your password", type="password")
 
-        if st.button("Login", use_container_width=True):
-            if username in st.session_state.users and st.session_state.users[username] == password:
+# ---------------- SESSION ----------------
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
+if "automation_running" not in st.session_state: st.session_state.automation_running = False
+if "automation_state" not in st.session_state:
+    st.session_state.automation_state = type('obj',(object,),{
+        "running": False,
+        "message_count": 0,
+        "message_rotation_index": 0
+    })()
+
+init_live_logs()
+
+
+# ---------------- LOGIN ----------------
+if not st.session_state.logged_in:
+    tab1, tab2 = st.tabs(["Login", "Create Account"])
+    with tab1:
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
+        if st.button("Login"):
+            uid = db.verify_user(u, p)
+            if uid:
                 st.session_state.logged_in = True
-                st.success("✅ Login successful!")
+                st.session_state.user_id = uid
+                cfg = db.get_user_config(uid)
+
+                st.session_state.chat_id = cfg.get("chat_id", "")
+                st.session_state.chat_type = cfg.get("chat_type", "E2EE")
+                st.session_state.delay = cfg.get("delay", 15)
+                st.session_state.cookies = cfg.get("cookies", "")
+                st.session_state.messages = cfg.get("messages", "").split("\n") if cfg.get("messages") else []
+
+                if cfg.get("running", False):
+                    st.session_state.automation_running = True
+                    st.session_state.automation_state.running = True
+
                 st.rerun()
             else:
-                st.error("❌ Invalid username or password")
+                st.error("Invalid login")
 
-    # ---------------- SIGN UP TAB ----------------
-    with tabs[1]:
-        st.subheader("Create New Account")
-
-        new_username = st.text_input("Choose Username", placeholder="Choose a unique username", key="signup_user")
-        new_password = st.text_input("Choose Password", placeholder="Create a strong password", type="password", key="signup_pass")
-        confirm_password = st.text_input("Confirm Password", placeholder="Re-enter your password", type="password", key="signup_confirm")
-
-        if st.button("Create Account", use_container_width=True):
-            if new_username in st.session_state.users:
-                st.warning("⚠️ Username already exists!")
-            elif new_password != confirm_password:
-                st.error("❌ Passwords do not match!")
-            elif len(new_password) < 4:
-                st.warning("⚠️ Password must be at least 4 characters!")
+    with tab2:
+        nu = st.text_input("New Username")
+        np = st.text_input("New Password", type="password")
+        npc = st.text_input("Confirm Password", type="password")
+        if st.button("Create User"):
+            if np != npc:
+                st.error("Passwords do not match")
             else:
-                st.session_state.users[new_username] = new_password
-                st.success("✅ Account created successfully! Please log in now.")
+                ok, msg = db.create_user(nu, np)
+                if ok: st.success("User created!")
+                else: st.error(msg)
+
+    st.stop()
 
 
-# ---------------- MAIN AUTOMATION PANEL ----------------
-def automation_panel():
-    st.markdown("""
-        <div style="background: linear-gradient(135deg,#6a11cb,#2575fc);
-                    padding:20px;border-radius:15px;margin-bottom:30px;
-                    text-align:center;color:white;">
-            <h2>MANJEET<br>E2EE FACEBOOK CONVO</h2>
-            <p>Created by MANJEET</p>
-        </div>
-    """, unsafe_allow_html=True)
+# ---------------- DASHBOARD ----------------
+st.subheader(f"Dashboard — User {st.session_state.user_id}")
 
-    st.sidebar.title("👤 Account")
-    if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.rerun()
-
-    tabs = st.tabs(["⚙️ Configuration", "🚀 Automation"])
-
-    # ---------------- CONFIGURATION TAB ----------------
-    with tabs[0]:
-        st.title("Your Configuration")
-
-        chat_id = st.text_input("Chat/Conversation ID", placeholder="e.g., 1362400298935018")
-        haters_name = st.text_input("Hatersname", placeholder="[END TO END HASSAN RAJPUT HERE]")
-        delay = st.number_input("Delay (seconds)", min_value=1, max_value=300, value=30)
-        fb_cookie = st.text_area("Facebook Cookies (optional - kept private)",
-                                placeholder="Paste your Facebook cookies here (will be encrypted)")
-        messages = st.text_area("Messages (one per line)",
-                                placeholder="Write your messages here, one per line")
-
-        if st.button("💾 Save Configuration"):
-            st.session_state.config = {
-                "chat_id": chat_id,
-                "haters_name": haters_name,
-                "delay": delay,
-                "fb_cookie": fb_cookie,
-                "messages": messages.splitlines()
-            }
-            st.success("✅ Configuration saved successfully!")
-
-    # ---------------- AUTOMATION TAB ----------------
-    with tabs[1]:
-        st.title("Automation Control")
-
-        st.write(f"**Messages Sent:** {st.session_state.message_count}")
-        status = "🟢 Running" if st.session_state.running else "🔴 Stopped"
-        st.write(f"**Status:** {status}")
-        st.write(f"**Total Logs:** {len(st.session_state.logs)}")
-
-        col1, col2 = st.columns(2)
-        start_btn = col1.button("▶️ Start E2EE")
-        stop_btn = col2.button("⏹️ Stop E2EE")
-
-        if start_btn and not st.session_state.running:
-            if "config" not in st.session_state:
-                st.warning("⚠️ Please save your configuration first!")
-            else:
-                st.session_state.running = True
-                st.session_state.logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Started automation.")
-                st.success("Automation started!")
-
-        if stop_btn and st.session_state.running:
-            st.session_state.running = False
-            st.session_state.logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Stopped automation.")
-            st.warning("Automation stopped.")
-
-        if st.session_state.running:
-            st.info("Automation is running... check logs below.")
-            config = st.session_state.config
-            for msg in config["messages"]:
-                if not st.session_state.running:
-                    break
-                log_entry = f"[{datetime.now().strftime('%H:%M:%S')}] Sent message: {msg}"
-                st.session_state.logs.append(log_entry)
-                st.session_state.message_count += 1
-                time.sleep(config["delay"])
-            st.session_state.running = False
-            st.success("✅ All messages sent successfully!")
-
-        st.subheader("📊 Live Logs")
-        if st.session_state.logs:
-            for log in reversed(st.session_state.logs[-10:]):
-                st.code(log)
-        else:
-            st.info("No logs yet. Start automation to see logs here.")
+if st.button("Logout"):
+    st.session_state.logged_in = False
+    st.session_state.automation_running = False
+    st.session_state.automation_state.running = False
+    st.rerun()
 
 
-# ---------------- MAIN EXECUTION ----------------
-if not st.session_state.logged_in:
-    login_page()
-else:
-    automation_panel()
+# ---------------- MESSAGE FILE ----------------
+msg_file = st.file_uploader("Upload .txt messages", type=["txt"])
+if msg_file:
+    st.session_state.messages = msg_file.read().decode().split("\n")
+    st.success("Messages Loaded")
+
+
+# ---------------- CONFIG ----------------
+chat_id = st.text_input("Chat ID", value=st.session_state.chat_id)
+chat_type = st.selectbox("Chat Type", ["E2EE", "Non-E2EE"], index=0 if st.session_state.chat_type == "E2EE" else 1)
+delay = st.number_input("Delay", 1, 300, value=st.session_state.delay)
+cookies = st.text_area("Cookies", value=st.session_state.cookies)
+
+if st.button("Save Config"):
+    db.update_user_config(
+        st.session_state.user_id,
+        chat_id, chat_type, delay,
+        cookies, "\n".join(st.session_state.messages),
+        running=st.session_state.automation_running
+    )
+    st.success("Saved!")
+
+
+# ---------------- AUTOMATION ENGINE ----------------
+def setup_browser():
+    opt = Options()
+    opt.add_argument("--headless=new")
+    opt.add_argument("--no-sandbox")
+    opt.add_argument("--disable-dev-shm-usage")
+    return webdriver.Chrome(options=opt)
+
+def find_input(driver, chat_type):
+    sel = ["div[contenteditable='true']"] if chat_type == "E2EE" else ["div[contenteditable='true']", "textarea", "[role='textbox']"]
+    for s in sel:
+        try:
+            return driver.find_element(By.CSS_SELECTOR, s)
+        except: pass
+    return None
+
+
+def send_messages(cfg, stt):
+    try:
+        live_log("Starting browser...")
+        d = setup_browser()
+        d.get("https://www.facebook.com")
+        time.sleep(8)
+        live_log("Facebook loaded")
+
+        for c in (cfg.get("cookies") or "").split(";"):
+            if "=" in c:
+                n, v = c.split("=", 1)
+                try:
+                    d.add_cookie({"name":n.strip(), "value":v.strip(), "domain":".facebook.com", "path":"/"})
+                except:
+                    live_log(f"Cookie failed: {c}")
+
+        d.get(f"https://www.facebook.com/messages/t/{cfg.get('chat_id','')}")
+        time.sleep(10)
+        live_log("Chat opened")
+
+        box = find_input(d, cfg.get("chat_type"))
+        if not box:
+            live_log("❌ Input box not found")
+            stt.running = False
+            return
+
+        msgs = [m.strip() for m in (cfg.get("messages") or "").split("\n") if m.strip()]
+        if not msgs: msgs = ["Hello!"]
+
+        while stt.running:
+            msg = msgs[stt.message_rotation_index % len(msgs)]
+            stt.message_rotation_index += 1
+
+            try:
+                box.send_keys(msg)
+                box.send_keys("\n")
+                stt.message_count += 1
+                live_log(f"Sent: {msg}")
+            except Exception as e:
+                live_log(f"Error: {e}")
+
+            time.sleep(cfg.get("delay", 15))
+
+        live_log("Automation stopped")
+        d.quit()
+
+    except Exception as e:
+        live_log(f"Fatal Error: {e}")
+
+
+# ---------------- CONTROLS ----------------
+st.subheader("Automation Control")
+
+col1, col2 = st.columns(2)
+
+if col1.button("START", disabled=st.session_state.automation_running):
+    cfg = db.get_user_config(st.session_state.user_id)
+    cfg["running"] = True
+    st.session_state.automation_running = True
+    st.session_state.automation_state.running = True
+
+    t = threading.Thread(target=send_messages, args=(cfg, st.session_state.automation_state))
+    t.daemon = True
+    t.start()
+    if col2.button("STOP", disabled=not st.session_state.automation_running):
+    st.session_state.automation_state.running = False
+    st.session_state.automation_running = False
+    live_log("🛑 Stop pressed. Automation halting...")
+
+
+# ---------------- LIVE LOGS DISPLAY ----------------
+st.subheader("📡 Live Logs")
+st.write(f"Messages Sent: {st.session_state.automation_state.message_count}")
+
+render_live_console()
+
+if st.session_state.automation_running:
+    time.sleep(1)
+    st.rerun()
+    
