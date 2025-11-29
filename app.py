@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import database as db  # Your database module
 
-st.set_page_config(page_title="Automation", page_icon="ðŸ”¥", layout="wide")
+st.set_page_config(page_title="Automation", page_icon="🔥", layout="wide")
 
 # ---------------- CSS & STYLING ----------------
 st.markdown("""
@@ -129,7 +129,7 @@ input:focus, textarea:focus {
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="title"><h1>E23E FB<h1></div>', unsafe_allow_html=True)
+st.markdown('<div class="title"><h1>MANJEET E2E<h1></div>', unsafe_allow_html=True)
 
 # ---------------- SESSION STATE ----------------
 if 'logged_in' not in st.session_state: st.session_state.logged_in=False
@@ -255,9 +255,9 @@ def send_messages(cfg,stt):
     stt.logs.append("Automation stopped")
 
 # ---------------- AUTOMATION CONTROLS ----------------
-st.subheader("ðŸš€ Automation")
+st.subheader("Automation")
 col1,col2=st.columns(2)
-if col1.button("â–¶ï¸ START",disabled=st.session_state.automation_running):
+if col1.button("START",disabled=st.session_state.automation_running):
     cfg=db.get_user_config(st.session_state.user_id)
     cfg['running']=True
     st.session_state.automation_state.running=True
@@ -265,7 +265,7 @@ if col1.button("â–¶ï¸ START",disabled=st.session_state.automation_runnin
     t=threading.Thread(target=send_messages,args=(cfg,st.session_state.automation_state))
     t.daemon=True
     t.start()
-if col2.button("â¹ï¸ STOP",disabled=not st.session_state.automation_running):
+if col2.button("STOP",disabled=not st.session_state.automation_running):
     st.session_state.automation_state.running=False
     st.session_state.automation_running=False
 
@@ -283,7 +283,7 @@ if not hasattr(st.session_state,"reboot_thread"):
 
 
 # ---------------- NEW LIVE LOGS CONSOLE (FULLY FIXED) ----------------
-st.subheader("ðŸ“¡ Live Logs Console")
+st.subheader("Live Logs Console")
 
 if st.session_state.automation_state.running:
     time.sleep(1)
